@@ -1,18 +1,21 @@
- Use official Node.js image
-FROM node:18
+# Build stage
+FROM node:18 AS build
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy all project files
 COPY . .
 
-# Expose port (match the port used in server.js)
-EXPOSE 3000
+RUN npm run build
 
-# Run the application
-CMD ["node", "server.js"]
+# Production stage
+FROM nginx:alpine
+
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Expose port 80 to the host
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
